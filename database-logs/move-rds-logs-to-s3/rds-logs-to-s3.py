@@ -64,7 +64,7 @@ def copy_logs_from_RDS_to_S3():
 			logNamePrefix = config['LogNamePrefix']
 		else:
 			logNamePrefix = ""
-		configFileName = "db/" + RDSInstanceName + "/" + "backup_config"
+		configFileName = "db/host=" + RDSInstanceName + "/" + "backup_config"
 	else:
 		print ("ERROR: Values for the required field not specified")
 		print_usage()
@@ -136,7 +136,7 @@ def copy_logs_from_RDS_to_S3():
 			logFileAsBytes = str(logFileDataCleaned).encode()
 
 			# upload the log file to S3
-			objectName = "db/" + RDSInstanceName + "/" + "dt=" + str(backupStartTime.date()).replace("-","") + "/" + dbLog['LogFileName']
+			objectName = "db/host=" + RDSInstanceName + "/" + "dt=" + str(backupStartTime.date()).replace("-","") + "/" + dbLog['LogFileName'].replace("/","-")
 			try:
 				S3response = S3client.put_object(Bucket=S3BucketName, Key=objectName,Body=logFileAsBytes)
 				copiedFileCount += 1
