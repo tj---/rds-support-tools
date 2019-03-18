@@ -1,4 +1,3 @@
-
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -65,11 +64,11 @@ def copy_logs_from_RDS_to_S3():
 			logNamePrefix = config['LogNamePrefix']
 		else:
 			logNamePrefix = ""
-		configFileName = RDSInstanceName + "/" + "backup_config"
+		configFileName = "db/" + RDSInstanceName + "/" + "backup_config"
 	else:
 		print ("ERROR: Values for the required field not specified")
 		print_usage()
-		return 
+		return
 
 	# initialize
 	RDSclient = boto3.client('rds',region_name=region)
@@ -102,7 +101,7 @@ def copy_logs_from_RDS_to_S3():
 		else:
 			print ("Error: Unable to access config file, error: " + e.response['Error']['Message'])
 			return
-		
+
 	# copy the logs in batches to s3
 	copiedFileCount = 0
 	logMarker = ""
@@ -120,7 +119,7 @@ def copy_logs_from_RDS_to_S3():
 			print("Downloading log file: %s found and with LastWritten value of: %s " % (dbLog['LogFileName'],dbLog['LastWritten']))
 			if int(dbLog['LastWritten']) > lastWrittenThisRun:
 				lastWrittenThisRun = int(dbLog['LastWritten'])
-			
+
 			# download the log file
 			logFileData = ""
 			try:
@@ -137,7 +136,7 @@ def copy_logs_from_RDS_to_S3():
 			logFileAsBytes = str(logFileDataCleaned).encode()
 
 			# upload the log file to S3
-			objectName = RDSInstanceName + "/" + "backup_" + backupStartTime.isoformat() + "/" + dbLog['LogFileName']
+			objectName = "db/" + RDSInstanceName + "/" + "dt=" + str(backupStartTime.date()).replace("-","") + "/" + dbLog['LogFileName']
 			try:
 				S3response = S3client.put_object(Bucket=S3BucketName, Key=objectName,Body=logFileAsBytes)
 				copiedFileCount += 1
@@ -151,7 +150,7 @@ def copy_logs_from_RDS_to_S3():
 	# Update the last written time in the config
 	if lastWrittenThisRun > 0:
 		try:
-			S3response = S3client.put_object(Bucket=S3BucketName, Key=configFileName, Body=str.encode(str(lastWrittenThisRun)))			
+			S3response = S3client.put_object(Bucket=S3BucketName, Key=configFileName, Body=str.encode(str(lastWrittenThisRun)))
 		except botocore.exceptions.ClientError as e:
 			print ("Error writting the config to S3 bucket, S3 ClientError: " + e.response['Error']['Message'])
 			return
